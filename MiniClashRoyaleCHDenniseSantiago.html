@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<title>Mini Royale Love FINAL ULTRA</title>
+
+<style>
+body{margin:0;background:#020617;overflow:hidden;font-family:Arial}
+canvas{position:absolute}
+#ui{position:fixed;bottom:0;width:100%;background:#000c;padding:8px}
+.card{
+width:65px;height:90px;
+background:linear-gradient(#fb7185,#be123c);
+border-radius:12px;color:white;font-size:10px;
+display:inline-flex;flex-direction:column;
+align-items:center;justify-content:center;
+margin:4px;border:2px solid gold
+}
+.card img{width:40px;height:40px}
+#eliBar{height:10px;background:#222;border-radius:20px;margin-bottom:4px;overflow:hidden}
+#eli{height:100%;background:linear-gradient(to right,#a855f7,#ec4899);width:100%}
+#eliText{color:white;font-size:12px;margin-bottom:3px}
+</style>
+</head>
+
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="ui">
+<div id="eliText"></div>
+<div id="eliBar"><div id="eli"></div></div>
+<div id="cards"></div>
+</div>
+
+<!-- MUSICA -->
+<audio id="music" loop autoplay src="MusicaFondoBatallaCRDS.mp3"></audio>
+
+<!-- FX -->
+<audio id="hit" src="golpeoCRDS.mp3"></audio>
+<audio id="towerHit" src="golpeoTorreCRDS.mp3"></audio>
+<audio id="spawn" src="https://cdn.pixabay.com/audio/2022/03/10/audio_8d94c2b75a.mp3"></audio>
+<audio id="walk" loop src="https://cdn.pixabay.com/audio/2022/03/01/audio_2e5c52c7a5.mp3"></audio>
+
+<script>
+
+// ===================================================
+// MINI ROYALE LOVE — SISTEMA REAL DE ROTACIÓN
+// ===================================================
+
+const redirectWin="RoyaleMensajeTeAmo.html";
+
+const cv=c;
+const ctx=cv.getContext("2d");
+
+function resize(){
+cv.width=innerWidth;
+cv.height=innerHeight-140;
+}
+resize(); onresize=resize;
+
+// ================= ELIXIR =================
+
+let elixir=10, enemyElixir=10;
+
+setInterval(()=>{elixir=Math.min(10,elixir+0.25)},400);
+setInterval(()=>{enemyElixir=Math.min(10,enemyElixir+0.12)},900);
+
+// ================= TORRES =================
+
+let enemyTowerImg=new Image();
+enemyTowerImg.src="https://i.postimg.cc/YjM6pb8W/King-Tower-Red-Active.webp";
+
+let playerTowerImg=new Image();
+playerTowerImg.src="https://i.postimg.cc/dDw2q4nd/King-Tower-Blue-Active.webp";
+
+let enemyTower={x:0,y:60,hp:200,max:200};
+let playerTower={x:0,y:0,hp:520,max:520};
+
+// ================= PUENTE =================
+
+const bridge={
+x:()=>cv.width/2,
+y:()=>cv.height/2,
+w:140,
+h:40
+};
+
+// ================= TROPAS =================
+
+const troops=[
+["Bruja","https://i.postimg.cc/pyRf2qkD/Bruja-Evoluci-n.webp",4],
+["Mosquetera","https://i.postimg.cc/CdSGFmJG/Hero-Musketeer-Card.webp",3],
+["Cazador","https://i.postimg.cc/3WYXKn9m/Cazador.webp",3],
+["Barbaros","https://i.postimg.cc/Dmnr2B5P/B-rbaros-Carta-Nuevo.webp",4],
+["Dragon","https://i.postimg.cc/QVhQX0Sm/Beb-drag-n.webp",3],
+["Fantasma","https://i.postimg.cc/qg4skjQL/Fantasma-real.webp",2],
+["MiniPEKKA","https://i.postimg.cc/ThfVRCQc/Mini-PEKKACard.webp",4],
+["Mago","https://i.postimg.cc/14sG9JMD/Mago.webp",4]
+];
+
+// ================= DECK REAL =================
+
+let drawPile=[0,1,2,3];
+let nextPile=[4,5,6,7];
+
+function drawCards(){
+cards.innerHTML="";
+drawPile.forEach(i=>{
+let d=document.createElement("div");
+d.className="card";
+d.innerHTML=`<img src="${troops[i][1]}"><br>${troops[i][0]}<br>${troops[i][2]}`;
+d.onclick=()=>spawnUnit(i);
+cards.appendChild(d);
+});
+}
+drawCards();
+
+// ================= CLASE UNIDAD =================
+
+class Unit{
+constructor(x,y,i,dir,team){
+this.x=x; this.y=y; this.i=i;
+this.dir=dir; this.team=team;
+
+this.hp=team=="P"?130:60;
+this.max=this.hp;
+this.atk=team=="P"?7:2;
+this.speed=team=="P"?1:0.5;
+
+this.cool=0;
+this.range=26;
+this.target=null;
+
+this.img=new Image();
+this.img.src=troops[i][1];
+}
+
+find(list){
+let t=null,d=999;
+list.forEach(e=>{
+let dd=Math.abs(this.y-e.y);
+if(dd<d && dd<this.range){d=dd;t=e}
+});
+return t;
+}
+
+update(enemies){
+
+// BUSCAR
+
+if(!this.target||this.target.hp<=0)
+this.target=this.find(enemies);
+
+// PELEA
+
+if(this.target){
+this.cool--;
+if(this.cool<=0){
+this.target.hp-=this.atk;
+hit.currentTime=0;hit.play();
+this.cool=this.team=="P"?8:22;
+}
+return;
+}
+
+// TORRES
+
+if(this.team=="P" && Math.abs(this.y-enemyTower.y)<40){
+enemyTower.hp-=0.4;
+towerHit.currentTime=0;towerHit.play();
+return;
+}
+
+if(this.team=="E" && Math.abs(this.y-playerTower.y)<40){
+playerTower.hp-=0.15;
+towerHit.currentTime=0;towerHit.play();
+return;
+}
+
+// PUENTE OBLIGATORIO
+
+if(this.team=="P" && this.y<cv.height/2+20 && this.x!==bridge.x()){
+this.x=bridge.x();
+}
+
+if(this.team=="E" && this.y>cv.height/2-20 && this.x!==bridge.x()){
+this.x=bridge.x();
+}
+
+// CAMINAR
+
+this.y+=this.dir*this.speed;
+}
+
+draw(){
+ctx.drawImage(this.img,this.x-18,this.y-18,36,36);
+ctx.fillStyle=this.team=="P"?"lime":"orange";
+ctx.fillRect(this.x-18,this.y-28,36*(this.hp/this.max),4);
+}
+}
+
+// ================= ARRAYS =================
+
+let P=[],E=[];
+
+// ================= SPAWN CON ROTACIÓN =================
+
+function spawnUnit(i){
+
+if(elixir<troops[i][2])return;
+
+elixir-=troops[i][2];
+spawn.currentTime=0;spawn.play();
+walk.play();
+
+P.push(new Unit(cv.width/2,cv.height-120,i,-1,"P"));
+
+// ROTACIÓN
+
+drawPile.splice(drawPile.indexOf(i),1);
+drawPile.push(nextPile.shift());
+nextPile.push(i);
+
+drawCards();
+}
+
+// ================= ENEMIGO =================
+
+setInterval(()=>{
+if(enemyElixir>=4 && E.length<2){
+enemyElixir-=4;
+E.push(new Unit(cv.width/2,90,Math.floor(Math.random()*8),1,"E"));
+}
+},3500);
+
+// ================= LOOP =================
+
+function loop(){
+
+enemyTower.x=cv.width/2;
+playerTower.x=cv.width/2;
+playerTower.y=cv.height-50;
+
+ctx.clearRect(0,0,cv.width,cv.height);
+
+// MAPA
+
+ctx.fillStyle="#16a34a";
+ctx.fillRect(0,0,cv.width,cv.height);
+
+ctx.fillStyle="#38bdf8";
+ctx.fillRect(0,cv.height/2-25,cv.width,50);
+
+// PUENTE
+
+ctx.fillStyle="#92400e";
+ctx.fillRect(cv.width/2-70,cv.height/2-20,140,40);
+
+// TORRES
+
+ctx.drawImage(enemyTowerImg,enemyTower.x-40,enemyTower.y-40,80,80);
+ctx.fillStyle="red";
+ctx.fillRect(enemyTower.x-40,enemyTower.y-55,80*(enemyTower.hp/enemyTower.max),6);
+
+ctx.drawImage(playerTowerImg,playerTower.x-40,playerTower.y-40,80,80);
+ctx.fillStyle="cyan";
+ctx.fillRect(playerTower.x-40,playerTower.y+45,80*(playerTower.hp/playerTower.max),6);
+
+// UNIDADES
+
+P.forEach(p=>{p.update(E);p.draw()});
+E.forEach(e=>{e.update(P);e.draw()});
+
+P=P.filter(u=>u.hp>0);
+E=E.filter(u=>u.hp>0);
+
+// UI
+
+eli.style.width=(elixir/10*100)+"%";
+eliText.innerHTML="Elixir: "+elixir.toFixed(1)+" / 10";
+
+// GANAR / PERDER
+
+if(enemyTower.hp<=0){location.replace(redirectWin);return;}
+if(playerTower.hp<=0){alert("Perdiste");location.reload();}
+
+requestAnimationFrame(loop);
+}
+
+loop();
+
+</script>
+</body>
+</html>
