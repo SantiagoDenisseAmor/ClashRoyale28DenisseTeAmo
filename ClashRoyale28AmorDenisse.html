@@ -1,3 +1,5 @@
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,13 +27,14 @@ display:flex;
 justify-content:center;
 align-items:center;
 overflow:hidden;
+transition:opacity .4s ease;
 }
 
 .overlay{
 position:absolute;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.35);
+background:rgba(0,0,0,0.4);
 }
 
 .game{
@@ -47,7 +50,6 @@ justify-content:space-between;
 z-index:2;
 }
 
-/* Barra superior */
 .top{
 display:flex;
 justify-content:space-between;
@@ -60,7 +62,6 @@ border-radius:15px;
 font-size:14px;
 }
 
-/* Centro */
 .center{
 text-align:center;
 margin-top:20px;
@@ -80,18 +81,14 @@ animation:float 3s infinite ease-in-out;
 100%{transform:translateY(0);}
 }
 
-.chest:active{
-transform:scale(0.9);
-}
-
 .secret{
 margin-top:15px;
 font-size:15px;
 color:#ffeaa7;
 min-height:40px;
+text-shadow:0 0 8px black;
 }
 
-/* Botón Batalla */
 .battle{
 margin-bottom:80px;
 align-self:center;
@@ -130,14 +127,25 @@ margin-bottom:20px;
 
 <div class="overlay"></div>
 
-<audio id="click" src="SonidoBotonCRDS.mp3"></audio>
-<audio id="open" src="MusicaFondoCRDS.mp3"></audio>
+<!-- 🎵 Música fondo -->
+<audio id="bgMusic" loop>
+  <source src="MusicaFondoCRDS.mp3" type="audio/mpeg">
+</audio>
+
+<!-- 🔊 Sonidos -->
+<audio id="clickSound">
+  <source src="SonidoBotonCRDS.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="chestSound">
+  <source src="SonidoCofreCRDS.mp3" type="audio/mpeg">
+</audio>
 
 <div class="game">
 
 <div class="top">
-<div class="badge">❤️ Nivel Infinito</div>
-<div class="badge">💎 Amor Legendario</div>
+<div class="badge">&#10084;&#65039; Nivel Infinito</div>
+<div class="badge">&#128142; Amor Legendario</div>
 </div>
 
 <div class="center">
@@ -150,36 +158,56 @@ BATALLA
 </div>
 
 <div class="footer">
-Cada partida contigo es victoria 🏆
+Cada partida contigo es victoria &#127942;
 </div>
 
 </div>
 
 <script>
 
+// 🎵 Iniciar música cuando toquen pantalla
+document.addEventListener("click", function startMusic(){
+let music = document.getElementById("bgMusic");
+music.volume = 0.4;
+music.play();
+document.removeEventListener("click", startMusic);
+});
+
+// 💌 Mensajes secretos
 const mensajes=[
-"Tu sonrisa es mi carta favorita 💘",
-"Eres mi reina legendaria 👑",
-"Mi corazón solo juega contigo ❤️",
-"Siempre gano cuando estoy contigo 🫶",
-"Eres mi mejor partida 🥹"
+"Tu sonrisa es mi carta favorita &#128150;",
+"Eres mi reina legendaria &#128081;",
+"Mi coraz&#243;n solo juega contigo &#10084;&#65039;",
+"Siempre gano cuando estoy contigo &#128158;",
+"Eres mi mejor partida &#129392;",
+"Nuestro amor es nivel infinito &#8734;",
+"Si esto fuera Clash, t&#250; ser&#237;as mi campeona &#128293;"
 ];
 
-document.getElementById("chest").onclick=()=>{
-document.getElementById("open").play();
-document.getElementById("chest").style.transform="scale(1.2)";
-setTimeout(()=>{
-document.getElementById("chest").style.transform="scale(1)";
-},200);
-document.getElementById("secret").innerText=
+// 📦 Abrir cofre
+document.getElementById("chest").onclick=function(){
+let sound=document.getElementById("chestSound");
+sound.currentTime=0;
+sound.play();
+
+this.style.transform="scale(1.2)";
+setTimeout(()=>{this.style.transform="scale(1)";},200);
+
+document.getElementById("secret").innerHTML=
 mensajes[Math.floor(Math.random()*mensajes.length)];
 };
 
+// ⚔ Botón batalla
 function goLove(){
-document.getElementById("click").play();
+let click=document.getElementById("clickSound");
+click.currentTime=0;
+click.play();
+
+document.body.style.opacity="0";
+
 setTimeout(()=>{
-window.location.href="MiniClashRoyaleCHDenniseSantiago.html"; // SI VES ESTO DENISSE TE AMO
-},300);
+window.location.href="MiniClashRoyaleCHDenniseSantiago.html";
+},400);
 }
 
 </script>
