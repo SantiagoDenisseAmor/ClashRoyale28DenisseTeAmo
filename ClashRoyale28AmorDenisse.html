@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
 
 <style>
-
 *{
 margin:0;
 padding:0;
@@ -32,7 +31,7 @@ transition:opacity .4s ease;
 position:absolute;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.4);
+background:rgba(0,0,0,0.45);
 }
 
 .game{
@@ -69,7 +68,7 @@ margin-top:20px;
 width:180px;
 max-width:60%;
 cursor:pointer;
-transition:0.3s;
+transition:.3s;
 animation:float 3s infinite ease-in-out;
 }
 
@@ -97,7 +96,7 @@ border-radius:20px;
 font-size:26px;
 box-shadow:0 8px #c9a500;
 cursor:pointer;
-transition:0.2s;
+transition:.2s;
 animation:pulse 2s infinite;
 }
 
@@ -126,17 +125,18 @@ margin-bottom:20px;
 <div class="overlay"></div>
 
 <!-- 🎵 Música fondo -->
-<audio id="bgMusic" loop>
-  <source src="MusicaFondoCRDS.mp3" type="audio/mpeg">
+<audio id="bgMusic" loop preload="auto">
+<source src="MusicaFondoCRDS.mp3" type="audio/mpeg">
 </audio>
 
-<!-- 🔊 Sonidos -->
-<audio id="clickSound">
-  <source src="SonidoBotonCRDS.mp3" type="audio/mpeg">
+<!-- 🔊 Sonido botón -->
+<audio id="clickSound" preload="auto">
+<source src="SonidoBotonCRDS.mp3" type="audio/mpeg">
 </audio>
 
-<audio id="chestSound">
-  <source src="SonidoCofreCRDS.mp3" type="audio/mpeg">
+<!-- 📦 Sonido cofre -->
+<audio id="chestSound" preload="auto">
+<source src="SonidoCofreCRDS.mp3" type="audio/mpeg">
 </audio>
 
 <div class="game">
@@ -163,15 +163,30 @@ Cada partida contigo es victoria &#127942;
 
 <script>
 
-// 🎵 Iniciar música cuando toquen pantalla
-document.addEventListener("click", function startMusic(){
-let music = document.getElementById("bgMusic");
-music.volume = 0.4;
-music.play();
-document.removeEventListener("click", startMusic);
+const bgMusic = document.getElementById("bgMusic");
+const clickSound = document.getElementById("clickSound");
+const chestSound = document.getElementById("chestSound");
+
+// 🔥 FORZAR música al cargar (funciona en la mayoría de navegadores modernos)
+window.addEventListener("load", () => {
+    bgMusic.volume = 0.4;
+
+    let playPromise = bgMusic.play();
+
+    if (playPromise !== undefined) {
+        playPromise.catch(() => {
+            // Si el navegador bloquea autoplay, se activará en el primer toque
+            document.addEventListener("click", startMusicOnce);
+        });
+    }
 });
 
-// 💌 Mensajes secretos
+function startMusicOnce(){
+    bgMusic.play();
+    document.removeEventListener("click", startMusicOnce);
+}
+
+// 💌 Mensajes
 const mensajes=[
 "Tu sonrisa es mi carta favorita &#128150;",
 "Eres mi reina legendaria &#128081;",
@@ -182,11 +197,10 @@ const mensajes=[
 "Si esto fuera Clash, t&#250; ser&#237;as mi campeona &#128293;"
 ];
 
-// 📦 Abrir cofre
+// 📦 Cofre
 document.getElementById("chest").onclick=function(){
-let sound=document.getElementById("chestSound");
-sound.currentTime=0;
-sound.play();
+chestSound.currentTime=0;
+chestSound.play();
 
 this.style.transform="scale(1.2)";
 setTimeout(()=>{this.style.transform="scale(1)";},200);
@@ -195,11 +209,10 @@ document.getElementById("secret").innerHTML=
 mensajes[Math.floor(Math.random()*mensajes.length)];
 };
 
-// ⚔ Botón batalla
+// ⚔ Botón
 function goLove(){
-let click=document.getElementById("clickSound");
-click.currentTime=0;
-click.play();
+clickSound.currentTime=0;
+clickSound.play();
 
 document.body.style.opacity="0";
 
